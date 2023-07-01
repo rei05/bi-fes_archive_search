@@ -1,0 +1,212 @@
+<h1>アーカイブ検索</h1>
+
+<p style="text-align: left">
+参加者名かTwitch IDを入力して検索ボタンを押すと過去の出演シーンのアーカイブリンクが表示されます。<br>
+過去の参加応募名であれば表記揺れがあっても検索できますが、結果に表示されるのは最後に参加した際の応募名です。<br>
+空欄のまま検索ボタンを押すと過去の全参加者がヒットするのでフィルターで条件を絞って探すこともできます。
+</p>
+
+<p>
+<form onsubmit="event.preventDefault(); search();" target="_self">
+  <input type="text" id="searchString" placeholder="参加者名 or Twitch ID">
+  <button type='submit'>検索</button><br>
+</form>
+<details>
+  <summary class="pointer">フィルター</summary>
+  <div class="box">
+  <ul>
+    <li>
+    <p>
+    <b>開催回</b><br>
+    <label class="pointer" for="2020春"><input type="checkbox" id="2020春" name="season" value="2020春" checked="" onclick="updateResults()">2020春</label>
+    <label class="pointer" for="2020夏"><input type="checkbox" id="2020夏" name="season" value="2020夏" checked="" onclick="updateResults()">2020夏</label>
+    <label class="pointer" for="2020秋"><input type="checkbox" id="2020秋" name="season" value="2020秋" checked="" onclick="updateResults()">2020秋</label>
+    <label class="pointer" for="2021冬"><input type="checkbox" id="2021冬" name="season" value="2021冬" checked="" onclick="updateResults()">2021冬</label>
+    <label class="pointer" for="2021夏"><input type="checkbox" id="2021夏" name="season" value="2021夏" checked="" onclick="updateResults()">2021夏</label>
+    <label class="pointer" for="2021秋"><input type="checkbox" id="2021秋" name="season" value="2021秋" checked="" onclick="updateResults()">2021秋</label>
+    <label class="pointer" for="2022冬"><input type="checkbox" id="2022冬" name="season" value="2022冬" checked="" onclick="updateResults()">2022冬</label>
+    <label class="pointer" for="2022夏"><input type="checkbox" id="2022夏" name="season" value="2022夏" checked="" onclick="updateResults()">2022夏</label>
+    <label class="pointer" for="2022秋"><input type="checkbox" id="2022秋" name="season" value="2022秋" checked="" onclick="updateResults()">2022秋</label>
+    <label class="pointer" for="2023冬"><input type="checkbox" id="2023冬" name="season" value="2023冬" checked="" onclick="updateResults()">2023冬</label><br>
+    <button type="button" onclick="checkAll('season',true)">全て選択</button>
+    <button type="button" onclick="checkAll('season',false)">全て解除</button>
+    </p>
+    </li>
+    <li>
+    <p>
+    <b>日にち</b><br>
+    <label class="pointer" for="1日目"><input type="checkbox" id="1日目" name="day" value="1日目" checked="" onclick="updateResults()">1日目</label>
+    <label class="pointer" for="2日目"><input type="checkbox" id="2日目" name="day" value="2日目" checked="" onclick="updateResults()">2日目</label>
+    <label class="pointer" for="3日目"><input type="checkbox" id="3日目" name="day" value="3日目" checked="" onclick="updateResults()">3日目</label>
+    <label class="pointer" for="4日目"><input type="checkbox" id="4日目" name="day" value="4日目" checked="" onclick="updateResults()">4日目</label><br>
+    <button type="button" onclick="checkAll('day',true)">全て選択</button>
+    <button type="button" onclick="checkAll('day',false)">全て解除</button>
+    </p>
+    </li>
+  </ul>
+</div>
+</details>
+</p>
+<hitcount id="hitCount"></hitcount>
+<table id="results">
+  <thead id="thead"></thead>
+  <tbody id="tbody"></tbody>
+</table>
+<style>
+  .pointer {
+    cursor: pointer;
+  }
+  table {
+    border-collapse: collapse;
+  }
+  th, td {
+    border: 1px solid black;
+    padding: 5px;
+  }
+  .box {
+    background: #fff;
+    border: 3px solid #333;
+    border-radius: 20px;
+    line-height: 1.8rem;
+  }
+</style>
+<script>
+  const sheetID = '1gQTwJsqcqJ2EKphYRUbvrqVtAFKyuoc06-w5yTzrO9w';
+  const hitCount = document.getElementById("hitCount");
+  const table = document.getElementById("results");
+  const thead = document.getElementById("thead");
+  const tbody = document.getElementById("tbody");
+  var records;
+  var playerIDs;
+  var searchString;
+  function getDataFromSheet(sheetID, sheetName, query) {
+    var request = new XMLHttpRequest();
+    var url = "https://docs.google.com/spreadsheets/d/" + sheetID + "/gviz/tq?tqx=out:json&sheet=" + encodeURIComponent(sheetName) + "&tq=" + encodeURIComponent(query);
+    request.open('GET', url, false);
+    request.send(null);
+    var data = JSON.parse(request.responseText.substr(47).slice(0, -2));
+    var cols = [];
+    data.table.cols.forEach(col => {
+      if (col.label!=="") cols.push(col.label);
+    });
+    var rows = data.table.rows;
+    var results = [];
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i].c;
+      var result = {};
+      for (var j = 0; j < cols.length; j++) {
+        if (row[j] && row[j].v !== null) {
+          result[cols[j]] = row[j].v;
+        } else {
+          result[cols[j]] = "";
+        }
+      }
+      results.push(result);
+    }
+    return results;
+  }
+  function displayResults(records) {
+    thead.innerHTML = "<tr><th>参加者名</th><th>Twitch URL</th><th>アーカイブリンク</th></tr>"
+    tbody.innerHTML = "";
+    for (var i = 0; i < records.length; i++) {
+      var row = tbody.insertRow(i);
+      var name = row.insertCell(0);
+      var twitch = row.insertCell(1);
+      var archives = row.insertCell(2);
+      record = records[i];
+      name.innerHTML = record["参加者名"];
+      twitch.innerHTML = record["Twitchリンク"];
+      archives.innerHTML =  record["アーカイブリンク"];
+    }
+  }
+  function searchPlayer(searchString) {
+    searchString_upper = searchString.toUpperCase()
+    var query = "SELECT A WHERE UPPER(C) CONTAINS '" + searchString_upper + 
+                         "' OR UPPER(D) CONTAINS '" + searchString_upper +
+                         "' OR UPPER(E) CONTAINS '" + searchString_upper +
+                         "' OR UPPER(F) CONTAINS '" + searchString_upper +
+                         "' OR UPPER(G) CONTAINS '" + searchString_upper +
+                         "' OR UPPER(H) CONTAINS '" + searchString_upper +
+                         "' OR UPPER(I) CONTAINS '" + searchString_upper +
+                         "' OR UPPER(J) CONTAINS '" + searchString_upper +
+                         "' OR UPPER(K) CONTAINS '" + searchString_upper +
+                         "' OR UPPER(L) CONTAINS '" + searchString_upper +
+                         "' OR UPPER(M) CONTAINS '" + searchString_upper + "'";
+    var hit = getDataFromSheet(sheetID, "検索対象", query);
+    return hit;
+  }
+  function getKeyList(data, key) {
+    return data.map(function(value){return value[key];});
+  }
+  function makeTwitchHyperLink(TwitchID){
+    var twitchURL = "https://www.twitch.tv/"+TwitchID;
+    return "<a href=\""+twitchURL+"\" target=\"_blank\">"+twitchURL+"</a>";
+  }
+  function makeArchiveHyperLink(data) {
+    var archiveHyperLinks = data.map(function(record){
+      const archiveURL = "https://www.twitch.tv/videos/"+ record["アーカイブID"] +"?t="+record["タイムスタンプ"];
+      const displayText = record["開催回"]+record["日"]+"日目第"+record["部"]+"部"+record["番"]+"番手";
+      return "<a href=\""+archiveURL+"\" target=\"_blank\">"+displayText+"</a>";
+    });
+    return [archiveHyperLinks.join("<br>"), archiveHyperLinks.length];
+  }
+  function getCheckedStatus(checkboxes) {
+    var checkedStatus = {};
+    checkboxes.forEach(checkbox => { checkedStatus[checkbox.id] = checkbox.checked;});
+    return checkedStatus;
+  }
+  function makeResults(data, playerIDList) {
+    var results = [];
+    var nArchiveHyperLink = 0;
+    playerIDList.forEach(playerID => {
+      var playerRecord = data.filter(function(record) {
+        const season = document.getElementsByName('season');
+        const day = document.getElementsByName('day');
+        const seasonStatus = getCheckedStatus(season);
+        const dayStatus = getCheckedStatus(day);
+        return (record["参加者ID"]===playerID) && seasonStatus[record["開催回"]] && dayStatus[record["日"]+"日目"];
+      });
+      if (playerRecord.length>0) {
+        var twitchHyperLink = makeTwitchHyperLink(playerRecord[0]["Twitch ID"]);
+        var archiveHyperLink = makeArchiveHyperLink(playerRecord);
+        results.push({"参加者名":playerRecord[0]["最新参加者名"], "Twitchリンク":twitchHyperLink, "アーカイブリンク":archiveHyperLink[0]});
+        nArchiveHyperLink += archiveHyperLink[1];
+      }
+    });
+    return [results, nArchiveHyperLink];
+  }
+  function updateResults() {
+    if (records.length>0) {
+      var results = makeResults(records, playerIDs);
+      hitCount.innerHTML = "キーワード「"+ searchString +"」" + results[0].length + "名（"+ results[1] +"件）ヒット！";
+      displayResults(results[0]);
+    } else {
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+      hitCount.innerHTML = "キーワード「"+ searchString +"」ヒットしませんでした。";
+    }
+  }
+  function search() {
+    searchString = document.getElementById("searchString").value;
+    var hit = searchPlayer(searchString);
+    if (hit.length>0) {
+      playerIDs = getKeyList(hit, "参加者ID");
+      var query = playerIDs.map(function(playerID){return "(A=" + playerID+")";});
+      query = "SELECT * WHERE " + query.join(" OR ");
+      records = getDataFromSheet(sheetID, "レコード", query);
+      updateResults();
+    } else {
+      records = [];
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+      hitCount.innerHTML = "キーワード「"+ searchString +"」ヒットしませんでした。";
+    }
+  }
+  function checkAll(checkboxName, checkStatus) {
+    const checkboxes = document.querySelectorAll('input[name="'+checkboxName+'"]');
+    checkboxes.forEach((checkbox) => {
+      checkbox.checked = checkStatus;
+    });
+    updateResults();
+  }
+</script>
