@@ -1,15 +1,12 @@
 <h1>アーカイブ検索</h1>
 
-<p style="text-align: left">
-  参加者名かTwitch IDを入力して検索ボタンを押すと過去の出演シーンのアーカイブリンクが表示されます。<br>
-  過去の参加応募名であれば表記揺れがあっても検索できますが、結果に表示されるのは最後に参加した際の応募名です。<br>
-  空欄のまま検索ボタンを押すと過去の全参加者がヒットするのでフィルターで条件を絞って探すこともできます。
-</p>
-
 <p>
 <form onsubmit="event.preventDefault(); search();" target="_self">
   <input type="text" id="searchString" placeholder="参加者名 or Twitch ID">
   <button type='submit'>検索</button><br>
+  <p style="text-align: left; font-size: 12px">
+    ※空欄のまま検索ボタンを押すと過去の全参加者が表示されるのでフィルターで条件を絞って探すこともできます。
+  </p>
 </form>
 <details>
   <summary class="pointer" style="cursor: pointer">フィルター</summary>
@@ -36,6 +33,7 @@
     border: 1px solid black;
     padding: 5px;
   }
+
   .box {
     background: #fff;
     border: 3px solid #333;
@@ -58,11 +56,11 @@
 
   const seasons = ["2020春", "2020夏", "2020秋", "2021冬", "2021夏", "2021秋", "2022冬", "2022夏", "2022秋", "2023冬"]
   let innerHTML = seasons.map(function (season) {
-    return '<label class="pointer" for="' + season + '"><input type="checkbox" id="' + season + '" name="season" value="' + season + '" checked="" onclick="updateDisplay()">' + season + '</label>';
+    return '<label class="pointer" for="' + season + '"><input type="checkbox" id="' + season + '" name="season" value="' + season + '" checked="" onclick="updateDisplay()">' + season + '</label> ';
   });
   seasonCheckBox.innerHTML = '<b>開催回</b><br>' + innerHTML.join('') + '<br> <button type="button" onclick="checkAll(\'season\',true)">全て選択</button> <button type="button" onclick="checkAll(\'season\',false)">全て解除</button>';
 
-  innerHTML = Array.from({ length: 4 }, (_, i) => '<label class="pointer" for="'+ (i+1) +'日目"><input type="checkbox" id="'+ (i+1) +'日目" name="day" value="'+ (i+1) +'日目" checked="" onclick="updateDisplay()">'+ (i+1) +'日目</label>');
+  innerHTML = Array.from({ length: 4 }, (_, i) => '<label class="pointer" for="' + (i + 1) + '日目"><input type="checkbox" id="' + (i + 1) + '日目" name="day" value="' + (i + 1) + '日目" checked="" onclick="updateDisplay()">' + (i + 1) + '日目</label> ');
   dayCheckBox.innerHTML = '<b>日にち</b><br>' + innerHTML.join('') + '<br> <button type="button" onclick="checkAll(\'day\',true)">全て選択</button> <button type="button" onclick="checkAll(\'day\',false)">全て解除</button>';
 
 
