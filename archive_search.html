@@ -4,9 +4,9 @@
 <form onsubmit="event.preventDefault(); search();" target="_self">
   <input type="text" id="searchString" placeholder="参加者名 or Twitch ID">
   <button type='submit'>検索</button><br>
-  <p style="text-align: left; font-size: 12px">
-    ※空欄のまま検索ボタンを押すと過去の全参加者が表示されるのでフィルターで条件を絞って探すこともできます。
-  </p>
+  <span style="text-align: left; font-size: 12px">
+    ※空欄のまま検索ボタンを押すと過去の全参加者が表示されます。
+  </span>
 </form>
 <details>
   <summary class="pointer" style="cursor: pointer">フィルター</summary>
@@ -17,6 +17,9 @@
       </li>
       <li>
         <p id="dayCheckBox"></p>
+      </li>
+      <li>
+        <p id="typeCheckBox"></p>
       </li>
     </ul>
   </div>
@@ -54,7 +57,7 @@
   let searchString;
   let searchStringUpper;
 
-  const seasons = ["2020春", "2020夏", "2020秋", "2021冬", "2021夏", "2021秋", "2022冬", "2022夏", "2022秋", "2023冬"]
+  const seasons = ["2020春", "2020夏", "2020秋", "2021冬", "2021夏", "2021秋", "2022冬", "2022夏", "2022秋", "2023冬", "2023夏"]
   let innerHTML = seasons.map(function (season) {
     return '<label class="pointer" for="' + season + '"><input type="checkbox" id="' + season + '" name="season" value="' + season + '" checked="" onclick="updateDisplay()">' + season + '</label> ';
   });
@@ -63,6 +66,11 @@
   innerHTML = Array.from({ length: 4 }, (_, i) => '<label class="pointer" for="' + (i + 1) + '日目"><input type="checkbox" id="' + (i + 1) + '日目" name="day" value="' + (i + 1) + '日目" checked="" onclick="updateDisplay()">' + (i + 1) + '日目</label> ');
   dayCheckBox.innerHTML = '<b>日にち</b><br>' + innerHTML.join('') + '<br> <button type="button" onclick="checkAll(\'day\',true)">全て選択</button> <button type="button" onclick="checkAll(\'day\',false)">全て解除</button>';
 
+  const types = ["一般参加枠", "特別企画枠"]
+  innerHTML = types.map(function (type) {
+    return '<label class="pointer" for="' + type + '"><input type="checkbox" id="' + type + '" name="type" value="' + type + '" checked="" onclick="updateDisplay()">' + type + '</label> ';
+  });
+  typeCheckBox.innerHTML = '<b>参加枠</b><br>' + innerHTML.join('');
 
   // シートからデータを取得
   function getDataFromSheet(sheetID, sheetName, query) {
@@ -132,8 +140,10 @@
 
   function makeArchiveHyperLink(data) {
     let archiveHyperLinks = data.map(function (record) {
-      const archiveURL = "https://www.twitch.tv/videos/" + record["アーカイブID"] + "?t=" + record["タイムスタンプ"];
-      const displayText = record["開催回"] + record["日"] + "日目第" + record["部"] + "部" + record["番"] + "番手";
+      let archiveURL = "https://www.twitch.tv/videos/" + record["アーカイブID"] + "?t=" + record["タイムスタンプ"];
+      let displayText;
+      if (record["種別"] == "一般参加枠") { displayText = record["開催回"] + record["日"] + "日目第" + record["部"] + "部" + record["番"] + "番手"; }
+      if (record["種別"] == "特別企画枠") { displayText = record["開催回"] + record["日"] + "日目" + record["演目名"]; }
       return "<a href=\"" + archiveURL + "\" target=\"_blank\">" + displayText + "</a>";
     });
     return [archiveHyperLinks.join("<br>"), archiveHyperLinks.length];
@@ -145,17 +155,24 @@
     return checkedStatus;
   }
 
+  // recordsからフィルタ条件に合致するplayerIDのものを抽出
+  function recordFilter(records, playerID) {
+    return records.filter(function (record) {
+      const season = document.getElementsByName('season');
+      const day = document.getElementsByName('day');
+      const type = document.getElementsByName('type');
+      const seasonStatus = getCheckedStatus(season);
+      const dayStatus = getCheckedStatus(day);
+      const typeStatus = getCheckedStatus(type);
+      return (record["参加者ID"] === playerID) && seasonStatus[record["開催回"]] && dayStatus[record["日"] + "日目"] && typeStatus[record["種別"]];
+    });
+  }
+
   function makeResults() {
     let results = [];
     let nArchiveHyperLink = 0;
     playerIDs.forEach(playerID => {
-      let playerRecord = records.filter(function (record) {
-        const season = document.getElementsByName('season');
-        const day = document.getElementsByName('day');
-        const seasonStatus = getCheckedStatus(season);
-        const dayStatus = getCheckedStatus(day);
-        return (record["参加者ID"] === playerID) && seasonStatus[record["開催回"]] && dayStatus[record["日"] + "日目"];
-      });
+      let playerRecord = recordFilter(records, playerID);
       if (playerRecord.length > 0) {
         let twitchHyperLink = makeTwitchHyperLink(playerRecord[0]["Twitch ID"]);
         let archiveHyperLink = makeArchiveHyperLink(playerRecord);
