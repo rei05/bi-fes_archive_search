@@ -1,14 +1,21 @@
+<!DOCTYPE html>
 <html lang="ja">
-
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>個別カーカイブ検索</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
 <body>
 
+<div class="container mt-5">
 <h1>アーカイブ検索</h1>
-
-<p>
-<form onsubmit="event.preventDefault(); search();" target="_self">
-  <input type="text" id="searchString" placeholder="参加者名 or Twitch ID">
-  <button type='submit'>検索</button><br>
-  <span style="text-align: left; font-size: 12px">
+<!-- 検索フォーム -->
+<form class="form-inline mb-4"  onsubmit="event.preventDefault(); search();" target="_self">
+  <input class="form-control mr-sm-2" type="search" placeholder="参加者名 or Twitch ID" aria-label="検索" id="searchString">
+  <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">検索</button>
+  <span style="text-align: left; font-size: 16px">
     ※空欄のまま検索ボタンを押すと過去の全参加者が表示されます。
   </span>
 </form>
@@ -28,7 +35,8 @@
     </ul>
   </div>
 </details>
-</p>
+</div>
+
 <hitcount id="hitCount"></hitcount>
 <table id="results" style="border-collapse: collapse">
   <thead id="thead"></thead>
@@ -226,6 +234,8 @@
   }
 </script>
 
-</body>
+<!-- Bootstrap JavaScript（Popper.jsおよびBootstrapのJavaScriptプラグインを含む） -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
+</body>
 </html>
