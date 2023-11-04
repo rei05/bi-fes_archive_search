@@ -57,7 +57,7 @@
   let searchString;
   let searchStringUpper;
 
-  const seasons = ["2020春", "2020夏", "2020秋", "2021冬", "2021夏", "2021秋", "2022冬", "2022夏", "2022秋", "2023冬", "2023夏"]
+  const seasons = ["2020春", "2020夏", "2020秋", "2021冬", "2021夏", "2021秋", "2022冬", "2022夏", "2022秋", "2023冬", "2023夏", "2023秋"]
   let innerHTML = seasons.map(function (season) {
     return '<label class="pointer" for="' + season + '"><input type="checkbox" id="' + season + '" name="season" value="' + season + '" checked="" onclick="updateDisplay()">' + season + '</label> ';
   });
